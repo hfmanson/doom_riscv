@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-g -m32 -Wall -funsigned-char
-LDFLAGS=-m32 -L/usr/X11R6/lib
+LDFLAGS=-m32 -L/usr/lib/i386-linux-gnu
 LIBS=-lXext -lX11 -lm
 
 CFLAGS+=\
