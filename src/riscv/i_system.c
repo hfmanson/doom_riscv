@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "doomdef.h"
@@ -79,6 +80,19 @@ I_GetTime(void)
 	return (vt_base + vt_now) >> 1;
 }
 
+struct wb_kbd {
+	uint32_t data;
+} __attribute__((packed,aligned(4)));
+
+static volatile struct wb_kbd * const kbd_regs = (void*)(KBD_BASE);
+
+int
+kbd_getchar_nowait(void)
+{
+	int32_t c;
+	c = kbd_regs->data;
+	return c & 0x80000000 ? -1 : (c & 0xff);
+}
 
 static void
 I_GetRemoteEvent(void)
@@ -122,8 +136,11 @@ I_GetRemoteEvent(void)
 
 	while (1) {
 		int ch = console_getchar_nowait();
-		if (ch == -1)
-			break;
+		if (ch == -1) {
+			ch = kbd_getchar_nowait();
+			if (ch == -1)
+				break;
+		}
 
 		boolean msb = ch & 0x80;
 		ch &= 0x7f;
@@ -172,7 +189,7 @@ I_GetLocalEvent(void)
 		KEY_UPARROW,	/* RP2040_INPUT_JOYSTICK_UP    */
 		KEY_LEFTARROW,	/* RP2040_INPUT_JOYSTICK_LEFT  */
 		KEY_RIGHTARROW,	/* RP2040_INPUT_JOYSTICK_RIGHT */
-		KEY_RSHIFT,	/* RP2040_INPUT_JOYSTICK_PRESS */
+		KEY_RALT,	/* RP2040_INPUT_JOYSTICK_PRESS */
 		KEY_ESCAPE,	/* RP2040_INPUT_BUTTON_HOME    */
 		KEY_ENTER,	/* RP2040_INPUT_BUTTON_MENU    */
 		KEY_EQUALS,	/* RP2040_INPUT_BUTTON_SELECT  */
