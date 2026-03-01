@@ -94,6 +94,16 @@ kbd_getchar_nowait(void)
 	return c & 0x80000000 ? -1 : (c & 0xff);
 }
 
+char
+kbd_getchar(void)
+{
+	int32_t c;
+	do {
+		c = kbd_regs->data;
+	} while (c & 0x80000000);
+	return c;
+}
+
 static void
 I_GetRemoteEvent(void)
 {
@@ -136,7 +146,10 @@ I_GetRemoteEvent(void)
 
 	while (1) {
 		int ch = console_getchar_nowait();
+		int flag = 0;
+
 		if (ch == -1) {
+			flag = 1;
 			ch = kbd_getchar_nowait();
 			if (ch == -1)
 				break;
@@ -159,8 +172,8 @@ I_GetRemoteEvent(void)
 			mupd = true;
 		} else if (ch == 0x1f) {
 			/* Mouse movement */
-			signed char x = console_getchar();
-			signed char y = console_getchar();
+			signed char x = flag ? kbd_getchar() : console_getchar();
+			signed char y = flag ? kbd_getchar() : console_getchar();
 			mdx += x;
 			mdy += y;
 			mupd = true;
